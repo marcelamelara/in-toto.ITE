@@ -118,35 +118,37 @@ name: string
 command: list of strings
 expected_materials: list of artifact rules
 expected_products: list of artifact rules
-expected_predicates: list of expectedStepPredicates
+expected_predicate: expectedStepPredicate
 ```
 
 Each `expectedStepPredicate` object has the following schema.
 
 ```
 predicateType: string
+materials_selector: string
+products_selector: string
 functionaries: list of authorized functionary key IDs
 threshold: int
 ```
 
 The `predicateType` field contains the matching `TypeURI` of the predicate
-expected for the step. The original `pubkeys` field is updated to
+expected for the step. To support both transformational and informational
+predicates that may use different field names to record step materials and/or
+products, the `materials_selector` and `products_selector` fields to indicate
+the specific ITE-6 attestation field names verifiers should check for materials
+and products, respectively. The original `pubkeys` field is updated to
 `functionaries` to generalize signing semantics. Finally, `threshold` applies
 per predicate type rather than the step as a whole. Note that this schema
 supports the in-toto Attestation Framework while retaining all the capabilities
 of in-toto 1.0 layouts.
 
-This change maintains the core model of the original in-toto layout while
-allowing for multiple predicate types to be associated for a single step. Note
-that while this schema allows for multiple predicate types, the expectation is
-that they share the same materials and products--if two attestations do not
-share the input and output artifacts, they must belong to different steps. Of
-course, as informational predicates do not specify artifact products, the
-`expectedProducts` field does not apply to them. In a step with exclusively
-informational predicates, the `expectedProducts` field may be omitted or left
-empty. In a step with a mixture of transformational and informational
-predicates, the field only applies to the transformational predicates. The
-`expectedMaterials` field functions as it currently does, and applies to all
+This change maintains the core model of the original in-toto layout associating
+a single predicate with a single step (rather than a single command). It is
+also still true that if two attestations do not share the input and output
+artifacts, they must belong to different steps. Of course, as informational
+predicates do not specify artifact products, the `expectedProducts` field does
+not apply to them and may be omitted or left empty for the corresponding step.
+The `expectedMaterials` field functions as it currently does, and applies to all
 predicates, informational and transformational.
 
 === Supporting Sublayouts
@@ -158,23 +160,28 @@ verification workflow by presenting the sublayout file in place of the link
 expected for the corresponding step.
 
 The updated in-toto layout specified in this ITE is similar. The step is
-declared with one or more expected predicate types and when a layout is
-encountered, the verifier recursively verifies the sublayout, generating the
-expected predicates in the process. Note that this expects the verifier to be
-capable of generating distinct predicates--the in-toto v1.0 verifier was only
-aware of links and sublayout verification therefore generated an in-toto summary
-link. This is discussed further on in <<Custom Verifiers>>.
+declared with an expected predicate type and when a layout is encountered, the
+verifier recursively verifies the sublayout, generating the expected predicates
+in the process. Note that this expects the verifier to be capable of generating
+distinct predicates--the in-toto v1.0 verifier was only aware of links and
+sublayout verification therefore generated an in-toto summary link. This is
+discussed further on in <<Custom Verifiers>>.
 
 === Verifying Artifact Rules
 
-The verification workflow in the in-toto specification matches links to use by
-the name of the step and the key ID used to sign it. This part of the workflow
-is updated to support matching on predicate types as well. In addition,
+The verification workflow in the in-toto v1.0 specification matches links to
+use by the name of the step and the key ID used to sign it. This part of the
+workflow is updated to support matching on predicate types as well. In addition,
 artifact rules are updated to support
 link:https://github.com/in-toto/attestation/blob/main/spec/v1/resource_descriptor.md[ResourceDescriptor]
 defined in the in-toto Attestation Framework. The `name` field in a
-ResourceDescriptor object is used for pattern matching and the `digests` field
+ResourceDescriptor object is used for pattern matching and the `digest` field
 is used to verify equality of two artifacts.
+
+As in in-toto v.10, the `layoutEnvelope` and `layoutKeys` contain the signed
+layout and the signer's keys. The generalized `attestations` parameter is the
+set of in-toto attestations (with any predicate) to be checked against the
+layout. As before, `now` represents a current timestamp.
 
 ```go
 func Verify(layoutEnvelope, layoutKeys, attestations, now) {
@@ -221,7 +228,7 @@ As noted above, in-toto v1.0's verification workflow generates an in-toto
 summary link if verification succeeds. This is a powerful semantic that allows
 features like sublayouts (which enable delegating the supply chain definition
 for a step to authorized functionaries), and summarized verification (for
-environments with limited resources). With the introduction of in-toto
+environments with limited resources). With the introduction of the in-toto
 Attestation Framework, the verification workflow can be parametrized to support
 generating specific predicates as needed. For example, the default verifier can
 generate an in-toto link, another can generate SLSA Provenance, while for the
