@@ -123,14 +123,20 @@ expected_predicate: expectedStepPredicate
 
 The `expected_inputs` and `expected_outputs` fields replace the original
 `expected_materials` and `expected_products` fields, respectively, to generalize
-theri semantics. This change maintains the core model of the original in-toto
-layout associating a single predicate with a single step (rather than a single
-command). It is also still true that if two attestations do not share the input
-and output artifacts, they must belong to different steps. The `expected_inputs`
-field retains the current semantics that all steps have inputs regardless of
-predicate type, so it applies to all predicates, informational and
-transformational, but does the name of the field containing the inputs must
-still be indicated within the `expected_predicate` information.
+their semantics. This change maintains the core model of the in-toto v1 layout
+associating a single predicate with a single step (rather than a single
+command). It is also still true that, `expected_inputs` and `expected_outputs`
+specify a list of artifact rules against which step inputs and outputs must be
+checked. Thus, if two attestations do not share the input and output artifacts,
+it is still true that they must belong to different steps.
+
+The `expected_inputs` field retains the current semantics that all steps have
+inputs regardless of predicate type, so it applies to all predicates,
+informational and transformational, but does the name of the field containing
+the inputs must still be indicated within the `expected_predicate` information.
+Of course, as informational predicates do not specify output artifacts, the
+`expected_outputs` field does not apply to them and may be omitted or left empty
+for the corresponding step.
 
 Each `expectedStepPredicate` object has the following schema.
 
