@@ -183,7 +183,8 @@ is used to verify equality of two artifacts.
 As in in-toto v.10, the `layoutEnvelope` and `layoutKeys` contain the signed
 layout and the signer's keys. The generalized `attestations` parameter is the
 set of in-toto attestations (with any predicate) to be checked against the
-layout. As before, `now` represents a current timestamp.
+layout, assuming it contains one attestation per step. As before, `now`
+represents a current timestamp.
 
 ```go
 func Verify(layoutEnvelope, layoutKeys, attestations, now) {
@@ -196,30 +197,27 @@ func Verify(layoutEnvelope, layoutKeys, attestations, now) {
         panic
     }
 
-
     for _, step := range layout.Steps {
-        stepAttestations := attestationsForStep(step.Name, attestations)
-        for _, predicate := range step.ExpectedPredicates {
-            predicateAttestations := attestationsForStepPredicate(predicate.Type, stepAttestations)
-            if predicate.Type == LAYOUT {
-                Verify(predicateAttestations[0], predicate.Functionaries, predicateAttestations[1:], now)
-            } else {
-                verifiedClaims := verifyAttestationSignatures(predicate.Functionaries, predicateAttestations)
-                if len(verifiedClaims) < threshold {
-                    panic
-                }
-                for _, attestation := range verifiedClaims {
-                    applyMaterialRules(step.ExpectedMaterials, attestation.Materials, attestations)
-                    applyProductRules(step.ExpectedProducts, attestation.Products, attestations)
-                }
+        predicate := step.ExpectedPredicate {
+        stepAttestation := attestationsForStepPredicate(predicate.Type, attestations)
+        if predicate.Type == LAYOUT {
+	    sublayoutAttestations := resolveAttestations(stepAttestation)
+            Verify(stepAttestation, predicate.Functionaries, sublayoutAttestations, now)
+        } else {
+            verifiedClaims := verifyAttestationSignatures(predicate.Functionaries, stepAttestation)
+            if len(verifiedClaims) < threshold {
+                panic
             }
+
+            applyInputRules(step.ExpectedInputs, stepAttestation.InputsSelector, attestations)
+            applyOutputRules(step.ExpectedOutputs, stepAttestation.ProductsSelector, attestations)
         }
     }
 
     for _, inspection := range layout.Inspections {
         inspectionAttestation := executeInspection(inspection.Command)
-        applyMaterialRules(inspection.ExpectedMaterials, inspectionAttestation.Materials, attestations)
-        applyProductRules(inspection.ExpectedProducts, inspectionAttestation.Products, attestations)
+        applyInputRules(inspection.ExpectedInputs, inspectionAttestation.InputsSelector, attestations)
+        applyOutputRules(inspection.ExpectedOutputs, inspectionAttestation.OutputsSelector, attestations)
     }
 }
 ```
