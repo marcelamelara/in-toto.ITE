@@ -116,40 +116,42 @@ This ITE proposes updating this schema to incorporate predicate types.
 ```
 name: string
 command: list of strings
-expected_materials: list of artifact rules
-expected_products: list of artifact rules
+expected_inputs: list of artifact rules
+expected_outputs: list of artifact rules
 expected_predicate: expectedStepPredicate
 ```
+
+The `expected_inputs` and `expected_outputs` fields replace the original
+`expected_materials` and `expected_products` fields, respectively, to generalize
+theri semantics. This change maintains the core model of the original in-toto
+layout associating a single predicate with a single step (rather than a single
+command). It is also still true that if two attestations do not share the input
+and output artifacts, they must belong to different steps. The `expected_inputs`
+field retains the current semantics that all steps have inputs regardless of
+predicate type, so it applies to all predicates, informational and
+transformational, but does the name of the field containing the inputs must
+still be indicated within the `expected_predicate` information.
 
 Each `expectedStepPredicate` object has the following schema.
 
 ```
-predicateType: string
-materials_selector: string
-products_selector: string
+predicate_type: string
+inputs_selector: string
+outputs_selector: string
 functionaries: list of authorized functionary key IDs
 threshold: int
 ```
 
-The `predicateType` field contains the matching `TypeURI` of the predicate
+The `predicate_type` field contains the matching `TypeURI` of the predicate
 expected for the step. To support both transformational and informational
-predicates that may use different field names to record step materials and/or
-products, the `materials_selector` and `products_selector` fields to indicate
-the specific ITE-6 attestation field names verifiers should check for materials
-and products, respectively. The original `pubkeys` field is updated to
+predicates that may use different field names to record step inputs and/or
+outputs, the `inputs_selector` and `outputs_selector` fields indicate the
+specific ITE-6 attestation field names verifiers should check for inputs and
+outputs, respectively. The original `pubkeys` field is updated to
 `functionaries` to generalize signing semantics. Finally, `threshold` applies
 per predicate type rather than the step as a whole. Note that this schema
-supports the in-toto Attestation Framework while retaining all the capabilities
-of in-toto 1.0 layouts.
-
-This change maintains the core model of the original in-toto layout associating
-a single predicate with a single step (rather than a single command). It is
-also still true that if two attestations do not share the input and output
-artifacts, they must belong to different steps. Of course, as informational
-predicates do not specify artifact products, the `expectedProducts` field does
-not apply to them and may be omitted or left empty for the corresponding step.
-The `expectedMaterials` field functions as it currently does, and applies to all
-predicates, informational and transformational.
+supports the in-toto Attestation Framework while retaining all the semantics and
+capabilities of in-toto 1.0 layouts.
 
 === Supporting Sublayouts
 
@@ -273,10 +275,10 @@ time communicated to their users, allowing them to transition their layouts.
 == Security
 
 This ITE does not significantly affect the security of in-toto layouts. It
-preserves all of the existing capabilities of in-toto layouts, meaning no
-existing properties are lost. It presents a consistent way to handle contextual
-predicates in artifact rules, meaning in-toto's powerful step-chaining
-properties can apply to the Attestation Framework.
+preserves all of the existing semantics and capabilities of in-toto layouts,
+meaning no existing properties are lost. It presents a consistent way to handle
+contextual predicates in artifact rules, meaning in-toto's powerful
+step-chaining properties can apply to the Attestation Framework.
 
 [[infrastructure-requirements]]
 == Infrastructure Requirements
