@@ -204,7 +204,7 @@ func Verify(layoutEnvelope, layoutKeys, attestations, now) {
     }
 
     for _, step := range layout.Steps {
-        predicate := step.ExpectedPredicate {
+        predicate := step.ExpectedPredicate
         stepAttestation := attestationsForStepPredicate(predicate.Type, attestations)
         if predicate.Type == LAYOUT {
 	    sublayoutAttestations := resolveAttestations(stepAttestation)
