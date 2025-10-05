@@ -186,7 +186,7 @@ defined in the in-toto Attestation Framework. The `name` field in a
 ResourceDescriptor object is used for pattern matching and the `digest` field
 is used to verify equality of two artifacts.
 
-As in in-toto v.10, the `layoutEnvelope` and `layoutKeys` contain the signed
+As in in-toto v1.0, the `layoutEnvelope` and `layoutKeys` contain the signed
 layout and the signer's keys. The generalized `attestations` parameter is the
 set of in-toto attestations (with any predicate) to be checked against the
 layout, assuming it contains one attestation per step. As before, `now`
